@@ -1,7 +1,7 @@
 import { Rocket, MessageSquare, Users, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/shared/StatCard';
-import { StageBadge } from '@/components/shared/Stagebage';
+import { StageBadge } from '@/components/shared/Stagebadge';
 import { Progress } from '@/components/ui/progress';
 import { mockStartups, mockMilestones, mockMentorships } from '@/data/mock-data';
 

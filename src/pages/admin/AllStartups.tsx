@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StageBadge } from '@/components/shared/Stagebage';
+import { StageBadge } from '@/components/shared/Stagebadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { mockStartups, mockMilestones, mockMentorships, mockUsers } from '@/data/mock-data';

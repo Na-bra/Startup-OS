@@ -1,6 +1,6 @@
 import { Rocket, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { StageBadge } from '@/components/shared/Stagebage';
+import { StageBadge } from '@/components/shared/Stagebadge';
 import { mockStartups, mockUsers } from '@/data/mock-data';
 
 export default function Showcase() {

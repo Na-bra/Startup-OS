@@ -1,6 +1,6 @@
 import { Rocket, Users, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StageBadge } from '@/components/shared/Stagebage';
+import { StageBadge } from '@/components/shared/Stagebadge';
 import { Badge } from '@/components/ui/badge';
 import { mockStartups } from '@/data/mock-data';
 
