@@ -1,72 +1,43 @@
 
 
-# Startup OS — MVP Build Plan
+# Login & Signup with Supabase Auth + Role Selection
 
-## Overview
-A centralized web platform for managing startups in a school collaborative lab. Three role-based dashboards (Student, Mentor, Admin) plus a public showcase page, powered by Supabase Auth and database.
+## What You'll Get
+- **Login page** — email/password with a role selector (Student, Mentor, Admin)
+- **Signup page** — name, email, password, role selector
+- Protected routes — unauthenticated users redirected to `/login`
+- After login, redirected to the correct role-based dashboard
 
-## Phase 1: Foundation
+## Database Changes (1 migration)
 
-### 1. Supabase Setup — Database Schema
-Create the following tables via migrations:
+1. **Create `profiles` table** linked to `auth.users` — stores `full_name`, `avatar_url`
+2. **Create `user_roles` table** — `user_id` (references `auth.users`), `role` enum (student/mentor/admin)
+3. **`has_role()` security definer function** for RLS
+4. **Trigger** to auto-create profile row on signup
+5. **RLS policies** on both tables (users can read their own data)
 
-- **profiles** — linked to `auth.users`, stores display name, avatar, bio
-- **user_roles** — stores role assignments (student, mentor, admin) per user
-- **startups** — name, description, stage (idea → growth), logo, created_by
-- **startup_members** — links users to startups (role: founder, member)
-- **milestones** — per-startup milestones with status (pending, in-progress, completed)
-- **tasks** — per-milestone tasks with assignee, due date, status
-- **documents** — file metadata (name, URL, type) linked to startups, stored in Supabase Storage
-- **mentorship_records** — mentor-startup assignments with session logs and feedback
-- **activity_logs** — tracks key actions across the platform
+## New Files
 
-### 2. Auth & Role-Based Access
-- Supabase Auth with email/password signup and login
-- Auto-create profile on signup via database trigger
-- Role selection during onboarding (student/mentor/admin)
-- Row-Level Security policies on all tables using a `has_role()` security definer function
-- Protected routes that redirect based on user role
+| File | What it does |
+|------|-------------|
+| `src/pages/auth/Login.tsx` | Email, password, role radio group, sign-in button, link to signup |
+| `src/pages/auth/Signup.tsx` | Name, email, password, role radio group, create account button |
+| `src/components/layout/AuthLayout.tsx` | Centered card with Startup OS branding, no sidebar |
 
-### 3. App Shell & Navigation
-- Sidebar layout using shadcn Sidebar component
-- Role-aware navigation: different menu items per role
-- Clean professional design: blue primary (#2563EB), gray backgrounds, structured layouts
-- Responsive — works on the 673px viewport and larger
+## Changes to Existing Files
 
-## Phase 2: Student Dashboard
+- **`src/contexts/AuthContext.tsx`** — Replace mock auth with real Supabase Auth. Use `onAuthStateChange` + `getSession`. Fetch role from `user_roles` table. Add `signup()` method.
+- **`src/App.tsx`** — Add `/login` and `/signup` as public routes. Redirect unauthenticated users to `/login`.
+- **`src/data/mock-data.ts`** — Keep for fallback but no longer used as primary data source.
 
-- **My Startup** profile page — edit name, description, stage, team members
-- **Milestones** tracker — visual progress through growth stages with task checklists
-- **Documents** section — upload/view pitch decks, reports, files (Supabase Storage)
-- **Activity feed** — recent actions on their startup
+## Design
+- Rocket icon + "Startup OS" heading at top of card
+- Radio group for role selection (Student / Mentor / Admin)
+- Blue primary button, white card on light gray background
+- Toast notifications for errors (wrong password, etc.)
 
-## Phase 3: Mentor Dashboard
-
-- **Assigned Startups** list — cards showing each startup's stage and progress
-- **Startup Detail** view — see milestones, documents, team for a specific startup
-- **Feedback** system — add session notes and structured feedback per startup
-- **Progress Overview** — at-a-glance view of all assigned startups' health
-
-## Phase 4: Admin Panel
-
-- **Overview Dashboard** — key metrics (total startups, active mentorships, milestones completed)
-- **All Startups** table — filterable/sortable list with stage, progress, mentor assignment
-- **User Management** — view all users, assign roles, assign mentors to startups
-- **Engagement Tracking** — identify stagnating startups vs progressing ones
-
-## Phase 5: Public Showcase
-
-- **Public page** (no auth required) — grid/cards of startups with name, description, stage
-- **Startup detail** — public profile with team, milestones achieved, pitch deck if shared
-
-## Technical Details
-
-- **Stack**: React 18 + TypeScript + Tailwind CSS + shadcn/ui + Supabase
-- **Auth**: Supabase Auth, profiles table with trigger, user_roles table with `has_role()` function
-- **Storage**: Supabase Storage bucket for documents
-- **RLS**: All tables protected with role-based policies
-- **Routing**: React Router with role-based route guards
-
-## Build Order
-We'll build sequentially: Foundation (schema + auth + shell) → Student Dashboard → Mentor Dashboard → Admin Panel → Public Showcase. Each phase will be functional before moving to the next.
+## Flow
+1. User visits `/signup` → fills form with role → Supabase creates auth user → trigger creates profile → app inserts role into `user_roles` → redirected to `/dashboard`
+2. User visits `/login` → enters email/password → Supabase authenticates → app fetches role from `user_roles` → redirected to role-appropriate dashboard
+3. Logout clears session → redirect to `/login`
 
