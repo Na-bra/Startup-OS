@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Rocket, Target, FileText, Users, MessageSquare,
-  BarChart3, Settings, Globe, LogOut, ChevronDown,
+  BarChart3, Globe, LogOut, ChevronDown,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -11,10 +11,7 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const studentNav = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -46,7 +43,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, role, logout } = useAuth();
 
   const navItems = role ? navByRole[role] : studentNav;
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('') ?? '?';
@@ -104,36 +101,20 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
-        {/* Role switcher for demo */}
         {!collapsed && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-2 rounded-md p-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-left">
-                  <p className="text-xs font-medium leading-none">{user?.full_name}</p>
-                  <p className="text-xs text-sidebar-foreground/50 capitalize">{role}</p>
-                </div>
-                <ChevronDown className="h-3 w-3 text-sidebar-foreground/50" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-56">
-              <DropdownMenuItem onClick={() => switchRole('student')}>
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Switch to Student
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => switchRole('mentor')}>
-                <MessageSquare className="mr-2 h-4 w-4" /> Switch to Mentor
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => switchRole('admin')}>
-                <Settings className="mr-2 h-4 w-4" /> Switch to Admin
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={logout} className="text-destructive">
-                <LogOut className="mr-2 h-4 w-4" /> Log Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2 rounded-md p-2">
+            <Avatar className="h-7 w-7">
+              {user?.avatar_url && <AvatarImage src={user.avatar_url} />}
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-left">
+              <p className="text-xs font-medium leading-none text-sidebar-foreground">{user?.full_name}</p>
+              <p className="text-xs text-sidebar-foreground/50 capitalize">{role}</p>
+            </div>
+            <button onClick={logout} className="text-sidebar-foreground/50 hover:text-destructive transition-colors" title="Log out">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </SidebarFooter>
     </Sidebar>
