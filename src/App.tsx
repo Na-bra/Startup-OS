@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +23,11 @@ import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
-function ProtectedRouteLayout() {
+/**
+ * Wrapper that checks auth before rendering AppLayout.
+ * AppLayout uses <Outlet /> internally, so we render it as a layout route element.
+ */
+function ProtectedAppLayout() {
   return (
     <ProtectedRoute>
       <AppLayout />
@@ -46,7 +50,7 @@ const App = () => (
 
             {/* Protected routes */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route element={<ProtectedRouteLayout />}>
+            <Route element={<ProtectedAppLayout />}>
               <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/startup" element={<MyStartup />} />
               <Route path="/milestones" element={<Milestones />} />
