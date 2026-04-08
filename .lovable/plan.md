@@ -1,43 +1,64 @@
 
 
-# Login & Signup with Supabase Auth + Role Selection
+# Clerk Auth + Role Selection Page
 
-## What You'll Get
-- **Login page** — email/password with a role selector (Student, Mentor, Admin)
-- **Signup page** — name, email, password, role selector
-- Protected routes — unauthenticated users redirected to `/login`
-- After login, redirected to the correct role-based dashboard
+## Overview
+Install Clerk, add login/signup pages using Clerk's embedded components, and create a role selection page that saves the chosen role to the Supabase `user_roles` table. After role selection, users are redirected to their role-specific dashboard.
 
-## Database Changes (1 migration)
+## Setup
+- Install `@clerk/clerk-react`
+- You'll provide your **Clerk Publishable Key** — we'll store it as `VITE_CLERK_PUBLISHABLE_KEY` in the `.env` file (publishable keys are safe in client code)
 
-1. **Create `profiles` table** linked to `auth.users` — stores `full_name`, `avatar_url`
-2. **Create `user_roles` table** — `user_id` (references `auth.users`), `role` enum (student/mentor/admin)
-3. **`has_role()` security definer function** for RLS
-4. **Trigger** to auto-create profile row on signup
-5. **RLS policies** on both tables (users can read their own data)
+## Database Migration
+
+Create `user_roles` table to map Clerk user IDs to roles:
+
+```sql
+CREATE TYPE public.app_role AS ENUM ('student', 'mentor', 'admin');
+
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text NOT NULL UNIQUE,  -- Clerk user ID (text, not uuid)
+  role app_role NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+
+-- Public read/insert since auth is managed by Clerk externally
+CREATE POLICY "Allow all access" ON public.user_roles FOR ALL USING (true) WITH CHECK (true);
+```
 
 ## New Files
 
-| File | What it does |
-|------|-------------|
-| `src/pages/auth/Login.tsx` | Email, password, role radio group, sign-in button, link to signup |
-| `src/pages/auth/Signup.tsx` | Name, email, password, role radio group, create account button |
+| File | Purpose |
+|------|---------|
+| `src/pages/auth/SignIn.tsx` | Clerk `<SignIn />` component in a centered layout |
+| `src/pages/auth/SignUp.tsx` | Clerk `<SignUp />` component in a centered layout |
+| `src/pages/auth/SelectRole.tsx` | Three cards (Student, Mentor, Admin) — saves selection to `user_roles`, redirects to `/dashboard` |
 | `src/components/layout/AuthLayout.tsx` | Centered card with Startup OS branding, no sidebar |
+| `src/components/auth/ProtectedRoute.tsx` | Checks Clerk auth + role in DB. Redirects to sign-in or role selection as needed |
 
 ## Changes to Existing Files
 
-- **`src/contexts/AuthContext.tsx`** — Replace mock auth with real Supabase Auth. Use `onAuthStateChange` + `getSession`. Fetch role from `user_roles` table. Add `signup()` method.
-- **`src/App.tsx`** — Add `/login` and `/signup` as public routes. Redirect unauthenticated users to `/login`.
-- **`src/data/mock-data.ts`** — Keep for fallback but no longer used as primary data source.
+- **`src/main.tsx`** — Wrap `<App />` in `<ClerkProvider publishableKey={...}>`
+- **`src/contexts/AuthContext.tsx`** — Replace mock auth with Clerk's `useUser()` + fetch role from Supabase `user_roles` table. Remove `switchRole` and mock imports.
+- **`src/App.tsx`** — Add `/sign-in`, `/sign-up`, `/select-role` as public routes. Wrap dashboard routes with `<ProtectedRoute>`.
+- **`src/components/layout/AppSidebar.tsx`** — Remove demo role switcher. Show real user name from Clerk. Logout via Clerk's `signOut()`.
 
-## Design
-- Rocket icon + "Startup OS" heading at top of card
-- Radio group for role selection (Student / Mentor / Admin)
-- Blue primary button, white card on light gray background
-- Toast notifications for errors (wrong password, etc.)
+## User Flow
+1. Visit any page → `ProtectedRoute` checks Clerk session
+2. Not signed in → redirect to `/sign-in`
+3. Signed in, no role in `user_roles` → redirect to `/select-role`
+4. Pick a role → saved to Supabase → redirect to `/dashboard`
+5. Returning users go straight to dashboard
 
-## Flow
-1. User visits `/signup` → fills form with role → Supabase creates auth user → trigger creates profile → app inserts role into `user_roles` → redirected to `/dashboard`
-2. User visits `/login` → enters email/password → Supabase authenticates → app fetches role from `user_roles` → redirected to role-appropriate dashboard
-3. Logout clears session → redirect to `/login`
+## Role Selection Page Design
+- "Welcome to Startup OS" heading
+- Three cards: Student (graduation cap), Mentor (message icon), Admin (settings icon)
+- Each card has title + short description
+- Click saves role and redirects
+
+## What I Need From You
+Your **Clerk Publishable Key** (starts with `pk_test_` or `pk_live_`). I'll add it to the `.env` file.
 
