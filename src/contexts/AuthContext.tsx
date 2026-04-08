@@ -1,43 +1,70 @@
-import React, { createContext, useContext, useState } from 'react';
-import { UserProfile, UserRole } from '@/types';
-import { currentMockUser, mockUsers } from '@/data/mock-data';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUser, useAuth as useClerkAuth, useClerk } from '@clerk/clerk-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { UserRole } from '@/types';
 
 interface AuthContextType {
-  user: UserProfile | null;
+  user: { id: string; email: string; full_name: string; avatar_url?: string } | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   role: UserRole | null;
-  switchRole: (role: UserRole) => void;
-  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(currentMockUser);
+  const { user: clerkUser, isLoaded: userLoaded } = useUser();
+  const { isSignedIn, isLoaded: authLoaded } = useClerkAuth();
+  const { signOut } = useClerk();
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
 
-  const switchRole = (role: UserRole) => {
-    const userForRole = mockUsers.find(u => u.role === role);
-    if (userForRole) setUser(userForRole);
-  };
+  useEffect(() => {
+    if (!authLoaded || !userLoaded) return;
 
-  const login = async (_email: string, _password: string) => {
-    setUser(currentMockUser);
-  };
+    if (!isSignedIn || !clerkUser) {
+      setRole(null);
+      setRoleLoading(false);
+      return;
+    }
 
-  const logout = () => {
-    setUser(null);
-  };
+    const fetchRole = async () => {
+      setRoleLoading(true);
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', clerkUser.id)
+        .maybeSingle();
+
+      setRole((data?.role as UserRole) ?? null);
+      setRoleLoading(false);
+    };
+
+    fetchRole();
+  }, [isSignedIn, clerkUser, authLoaded, userLoaded]);
+
+  const isLoading = !authLoaded || !userLoaded || roleLoading;
+
+  const user = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+        full_name: clerkUser.fullName ?? '',
+        avatar_url: clerkUser.imageUrl,
+      }
+    : null;
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      role: user?.role ?? null,
-      switchRole,
-      login,
-      logout,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!isSignedIn,
+        isLoading,
+        role,
+        logout: () => signOut(),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
