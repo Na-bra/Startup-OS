@@ -51,8 +51,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existing) {
-      return new Response(JSON.stringify({ error: "Role already assigned" }), {
-        status: 409,
+      return new Response(JSON.stringify({ success: true, existing: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
