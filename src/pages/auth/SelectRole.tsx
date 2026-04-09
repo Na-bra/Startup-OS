@@ -24,11 +24,14 @@ export default function SelectRole() {
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({ user_id: user.id, role }, { onConflict: 'user_id' });
+      const response = await supabase.functions.invoke('assign-role', {
+        body: { user_id: user.id, role },
+      });
 
-      if (error) throw error;
+      if (response.error) throw new Error(response.error.message);
+      const data = response.data;
+      if (data?.error) throw new Error(data.error);
+
       navigate('/dashboard');
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
