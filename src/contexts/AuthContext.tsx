@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ? {
         id: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
-        full_name: clerkUser.fullName ?? '',
+        full_name: clerkUser.fullName || clerkUser.username || clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] || '',
         avatar_url: clerkUser.imageUrl,
       }
     : null;

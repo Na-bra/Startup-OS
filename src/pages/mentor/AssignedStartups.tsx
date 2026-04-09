@@ -1,13 +1,35 @@
 import { Rocket } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { StageBadge } from '@/components/shared/Stagebadge';
-import { Progress } from '@/components/ui/progress';
-import { mockStartups, mockMilestones, mockMentorships } from '@/data/mock-data';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAllStartups } from '@/hooks/use-startups';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AssignedStartups() {
-  const myMentorships = mockMentorships.filter(m => m.mentor_id === '3');
-  const assignedIds = [...new Set(myMentorships.map(m => m.startup_id))];
-  const startups = mockStartups.filter(s => assignedIds.includes(s.id));
+  const { user } = useAuth();
+  const { data: allStartups = [], isLoading: sl } = useAllStartups();
+
+  const { data: mentorships = [], isLoading: ml } = useQuery({
+    queryKey: ['mentorships', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('MentorshipRecords')
+        .select('*')
+        .eq('mentor_id', user!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const assignedIds = [...new Set(mentorships.map(m => m.startup_id))];
+  const startups = allStartups.filter(s => assignedIds.includes(s.id));
+
+  if (sl || ml) {
+    return <div className="space-y-4"><Skeleton className="h-8 w-48" /><Skeleton className="h-32" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -16,35 +38,34 @@ export default function AssignedStartups() {
         <p className="text-muted-foreground mt-1">Startups you're currently mentoring.</p>
       </div>
 
+      {startups.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Rocket className="h-12 w-12 mb-3 opacity-30" />
+            <p>No startups assigned to you yet.</p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4">
-        {startups.map(startup => {
-          const sml = mockMilestones.filter(m => m.startup_id === startup.id);
-          const done = sml.filter(m => m.status === 'completed').length;
-          const pct = sml.length ? Math.round((done / sml.length) * 100) : 0;
-          return (
-            <Card key={startup.id}>
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Rocket className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{startup.name}</h3>
-                      <StageBadge stage={startup.stage} />
-                    </div>
+        {startups.map(startup => (
+          <Card key={startup.id}>
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Rocket className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{startup.name}</h3>
+                    <StageBadge stage={startup.stage as any} />
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{startup.description}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Progress:</span>
-                  <Progress value={pct} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{done}/{sml.length}</span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </div>
+              <p className="text-sm text-muted-foreground">{startup.description}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
