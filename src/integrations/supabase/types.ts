@@ -33,47 +33,37 @@ export type Database = {
           timestamp?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "ActivityLogs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       Documents: {
         Row: {
           file_type: string | null
           file_url: string | null
           id: string
+          name: string | null
           startup_id: string | null
           uploaded_at: string
+          uploaded_by: string | null
         }
         Insert: {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          name?: string | null
           startup_id?: string | null
           uploaded_at?: string
+          uploaded_by?: string | null
         }
         Update: {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          name?: string | null
           startup_id?: string | null
           uploaded_at?: string
+          uploaded_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Documents_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "Startups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       MentorshipRecords: {
         Row: {
@@ -103,29 +93,7 @@ export type Database = {
           startup_id?: string | null
           student_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "MentorshipRecords_mentor_id_fkey"
-            columns: ["mentor_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "MentorshipRecords_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "Startups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "MentorshipRecords_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       Milestones: {
         Row: {
@@ -155,15 +123,7 @@ export type Database = {
           status?: string | null
           title?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Milestones_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "Startups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       Startups: {
         Row: {
@@ -171,6 +131,7 @@ export type Database = {
           description: string | null
           id: string
           name: string | null
+          stage: string
           status: string | null
           student_id: string | null
         }
@@ -179,6 +140,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
+          stage?: string
           status?: string | null
           student_id?: string | null
         }
@@ -187,18 +149,11 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string | null
+          stage?: string
           status?: string | null
           student_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Startups_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
